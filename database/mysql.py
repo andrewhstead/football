@@ -1,31 +1,10 @@
 import MySQLdb as _mysql
-from collections import namedtuple
-import re
 
-# Only needs to compile one time so we put it here
-float_match = re.compile(r'[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?$').match
-
-
-def is_number(string):
-    return bool(float_match(string))
 
 class MySQLDatabase(object):
-    """
-    This is the driver class that we will use
-    for connecting to our database. In here we'll
-    create a constructor (__init__) that will connect
-    to the database once the driver class is instantiated
-    and a destructor method that will close the database
-    connection once the driver object is destroyed.
-    """
 
     def __init__(self, database_name, username,
                  password, host='localhost'):
-        """
-        Here we'll try to connect to the database
-        using the variables that we passed through
-        and if the connection fails we'll print out the error
-        """
         try:
             self.db = _mysql.connect(db=database_name, host=host,
                                      user=username, passwd=password)
@@ -35,84 +14,50 @@ class MySQLDatabase(object):
             print e
 
     def __del__(self):
-        """
-        Here we'll do a check to see if `self.db` is present.
-        This will only be the case if the connection was
-        successfully made in the initialiser.
-        Inside that condition we'll close the connection
-        """
         if hasattr(self, 'db'):
             self.db.close()
             print "MySQL Connection Closed"
 
-    def get_available_tables(self):
-        cursor = self.db.cursor()
-        cursor.execute("SHOW TABLES;")
-        self.tables = cursor.fetchall()
+    def create_table(self, season, division):
 
-        cursor.close()
+        sql_str = "SELECT team_name AS Team, "
 
-        return self.tables
-
-    def get_columns_for_table(self, table_name):
-        cursor = self.db.cursor()
-        cursor.execute("SHOW COLUMNS FROM `%s`" % table_name)
-        self.columns = cursor.fetchall()
-
-        cursor.close()
-
-        return self.columns
-
-    def select(self, table, league_table=False, columns=None, named_tuples=False, **kwargs):
-        """
-        We'll create our `select` method in order
-        to make it simpler for extracting data from
-        the database.
-        select(table_name, [list_of_column_names])
-        """
-        sql_str = "SELECT "
-
-        # add columns or just use the wildcard
-        if not columns:
-            sql_str += " * "
-        else:
-            for column in columns:
-                sql_str += "%s, " % column
-
-            sql_str = sql_str[:-2]  # remove the last comma!
-
-        if league_table:
-            sql_str += " AS Team, "
-            sql_str += "SUM(if(teams.team_name = results.home_team " \
+        sql_str += "SUM(if(teams.team_name = results.home_team " \
                        "OR teams.team_name = results.away_team" \
                        ",1,0))" \
                        " AS P, "
-            sql_str += "SUM(if(teams.team_name = results.away_team " \
+
+        sql_str += "SUM(if(teams.team_name = results.away_team " \
                        "AND results.away_score > results.home_score " \
                        "OR teams.team_name = results.home_team " \
                        "AND results.home_score > results.away_score" \
                        ",1,0))" \
                        " AS W, "
-            sql_str += "SUM(IF(results.away_score = results.home_score" \
+
+        sql_str += "SUM(IF(results.away_score = results.home_score" \
                        ",1,0))" \
                        " AS D, "
-            sql_str += "SUM(if(teams.team_name = results.away_team " \
+
+        sql_str += "SUM(if(teams.team_name = results.away_team " \
                        "AND results.away_score < results.home_score " \
                        "OR teams.team_name = results.home_team " \
                        "AND results.home_score < results.away_score" \
                        ",1,0))" \
                        " AS L, "
-            sql_str += "SUM(IF(teams.team_name = results.home_team," \
+
+        sql_str += "SUM(IF(teams.team_name = results.home_team," \
                        "results.home_score,0)) " \
                        "+ SUM(IF(teams.team_name = results.away_team," \
                        "results.away_score,0))" \
                        " AS F, "
-            sql_str += "SUM(IF(teams.team_name = results.home_team," \
+
+        sql_str += "SUM(IF(teams.team_name = results.home_team," \
                        "results.away_score,0)) " \
                        "+ SUM(IF(teams.team_name = results.away_team," \
                        "results.home_score,0))" \
                        " AS A, "
-            sql_str += "ROUND((" \
+
+        sql_str += "ROUND((" \
                        "SUM(IF(teams.team_name = results.home_team," \
                        "results.home_score,0)) " \
                        "+ SUM(IF(teams.team_name = results.away_team," \
@@ -124,7 +69,8 @@ class MySQLDatabase(object):
                        "results.home_score,0)))" \
                        ",3)" \
                        " AS GA, "
-            sql_str += "SUM(if(teams.team_name = results.away_team " \
+
+        sql_str += "SUM(if(teams.team_name = results.away_team " \
                        "AND results.away_score > results.home_score " \
                        "OR teams.team_name = results.home_team " \
                        "AND results.home_score > results.away_score" \
@@ -133,142 +79,24 @@ class MySQLDatabase(object):
                        ",1,0))" \
                        " AS Pts"
 
-        # add the table to the SELECT query
-        sql_str += " FROM `%s`.`%s`" % (self.database_name, table)
+        sql_str += " FROM teams"
 
-        # if there's a JOIN clause attached
-        if kwargs.has_key('join'):
-            sql_str += " JOIN %s" % kwargs.get('join')
+        sql_str += " JOIN results ON " \
+                   "teams.team_name = results.home_team " \
+                   "OR " \
+                   "teams.team_name = results.away_team"
 
-        # if there's a WHERE clause attached
-        if kwargs.has_key('where'):
-            sql_str += " WHERE %s " % kwargs.get('where')
+        sql_str += " WHERE season = '%s' and division = '%s'" % (season, division)
 
-        # if there's a LIMIT clause attached
-        if kwargs.has_key('limit'):
-            sql_str += " LIMIT %s " % kwargs.get('limit')
+        sql_str += " GROUP BY team_name"
 
-        # if there's a GROUP BY clause attached
-        if kwargs.has_key('group_by'):
-            sql_str += " GROUP BY %s " % kwargs.get('group_by')
+        sql_str += " ORDER BY Pts DESC, GA DESC, Team ASC"
 
-        # if there's a ORDER BY clause attached
-        if kwargs.has_key('order_asc'):
-            sql_str += " ORDER BY %s " % kwargs.get('order_asc')
-        if kwargs.has_key('order_desc'):
-            sql_str += " ORDER BY %s DESC" % kwargs.get('order_desc')
-
-        sql_str += ";"  # Finalise out SQL string
-
-        cursor = self.db.cursor()
-        cursor.execute(sql_str)
-
-        if named_tuples:
-            results = self.convert_to_named_tuples(cursor)
-        else:
-            results = cursor.fetchall()
-
-        cursor.close()
-
-        return results
-
-    def convert_to_named_tuples(self, cursor):
-        results = None
-        names = [d[0] for d in cursor.description]
-        klass = namedtuple('Results', names)
-
-        try:
-            results = [klass(*record) for record in cursor.fetchall()]
-        except _mysql.ProgrammingError, e:
-            print e
-
-        return results
-
-    def delete(self, table, **wheres):
-        """
-        This function will allow us
-        to delete data from a given table
-        based on whether or not a WHERE
-        clause is present or not
-        """
-        sql_str = "DELETE FROM `%s`.`%s`" % (self.database_name, table)
-
-        if wheres is not None:
-            first_where_clause = True
-            for where, term in wheres.iteritems():
-                if first_where_clause:
-                    # This is the first WHERE clause
-                    sql_str += " WHERE `%s`.`%s` %s" % (table, where, term)
-                    first_where_clause = False
-                else:
-                    # this is an additional clause so use AND
-                    sql_str += " AND `%s`.`%s` %s" % (table, where, term)
         sql_str += ";"
 
         cursor = self.db.cursor()
         cursor.execute(sql_str)
-        self.db.commit()
+        results = cursor.fetchall()
         cursor.close()
 
-    def insert(self, table, **column_names):
-        """
-        Insert function.
-
-        Example Usage:-
-        db.insert('people', first_name='Ringo',
-                  second_name='Starr', DOB='STR_TO_DATE(
-                                            "01-01-1999", "%d-%m-%Y")')
-        """
-        sql_str = "INSERT INTO `%s`.`%s` " % (self.database_name, table)
-
-        if column_names is not None:
-            columns = "("
-            values = "("
-            for arg, value in column_names.iteritems():
-                columns += "`%s`, " % arg
-
-                # Check how we should add this to the columns string
-                if is_number(value) or arg == 'DOB':
-                    # It's a number or date so we don't add the ''
-                    values += "%s, " % value
-                else:
-                    # It's a string so we add the ''
-                    values += "'%s', " % value
-
-            columns = columns[:-2]  # Strip off the spare',' from the end
-            values = values[:-2]  # Same here too
-
-            columns += ") VALUES"  # Add the connecting keyword and brace
-            values += ");"  # Add the brace and like terminator
-
-            sql_str += "%s %s" % (columns, values)
-
-        cursor = self.db.cursor()
-        cursor.execute(sql_str)
-        self.db.commit()
-        cursor.close()
-
-    def update(self, table, where=None, **column_values):
-        sql_str = "UPDATE `%s`.`%s` SET " % (self.database_name, table)
-
-        if column_values is not None:
-            for column_name, value in column_values.iteritems():
-                sql_str += "`%s`=" % column_name
-
-                # check how we should add this to the colums string
-                if is_number(value):
-                    # its a number so we dont add ''
-                    sql_str += "%s, " % value
-                else:
-                    # its a date or a string so add the ''
-                    sql_str += "'%s', " % value
-
-        sql_str = sql_str[:-2]  # strip off the last , and space character
-
-        if where:
-            sql_str += " WHERE %s" % where
-
-        cursor = self.db.cursor()
-        cursor.execute(sql_str)
-        self.db.commit()
-        cursor.close()
+        return results

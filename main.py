@@ -12,16 +12,14 @@ db = MySQLDatabase(db_config.get('db_name'),
                    db_config.get('pass'),
                    db_config.get('host'))
 
-results = db.select('teams',
-                    league_table=True,
-                    columns=['team_name'],
-                    join='results ON teams.team_name = results.home_team OR teams.team_name = results.away_team',
-                    group_by="team_name",
-                    order_desc='Pts'
-                    )
+league_table = db.create_table('1888-89', 'FL')
 
 position = 0
 
-for row in results:
+for row in league_table:
     position += 1
-    print position, row
+    team_record = list()
+    team_record.append(position)
+    for entry in row:
+        team_record.append(str(entry))
+    print team_record
