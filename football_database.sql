@@ -114,5 +114,46 @@ INSERT INTO results (
     ('1888-09-08', 'Everton', 2, 1, 'Accrington', '1888-89', 'FL'),
     ('1888-09-08', 'Preston North End', 5, 2, 'Burnley', '1888-89', 'FL'),
     ('1888-09-08', 'Stoke', 0, 2, 'West Bromwich Albion', '1888-89', 'FL'),
-    ('1888-09-08', 'Wolverhampton Wanderers', 1, 1, 'Aston Villa', '1888-89', 'FL')
+    ('1888-09-08', 'Wolverhampton Wanderers', 1, 1, 'Aston Villa', '1888-89', 'FL'),
+	('1888-09-15', 'Aston Villa', 5, 1, 'Stoke', '1888-89', 'FL'),
+    ('1888-09-15', 'Blackburn Rovers', 5, 5, 'Accrington', '1888-89', 'FL'),
+    ('1888-09-15', 'Bolton Wanderers', 3, 4, 'Burnley', '1888-89', 'FL'),
+    ('1888-09-15', 'Derby County', 1, 2, 'West Bromwich Albion', '1888-89', 'FL'),
+    ('1888-09-15', 'Everton', 2, 1, 'Notts County', '1888-89', 'FL'),
+    ('1888-09-15', 'Wolverhampton Wanderers', 0, 4, 'Preston North End', '1888-89', 'FL')
 ;
+
+# To create a league table -
+SELECT
+	teams.team_name AS Team,
+    SUM(if(teams.team_name = results.home_team OR teams.team_name = results.away_team,1,0)) AS P,
+    SUM(if(teams.team_name = results.away_team
+		AND results.away_score > results.home_score
+        OR teams.team_name = results.home_team
+        AND results.home_score > results.away_score,1,0))
+        AS W,
+    SUM(IF(results.away_score = results.home_score,1,0)) AS D,
+	SUM(if(teams.team_name = results.away_team
+		AND results.away_score < results.home_score
+        OR teams.team_name = results.home_team
+        AND results.home_score < results.away_score,1,0))
+        AS L,
+    SUM(IF(teams.team_name = results.home_team,results.home_score,0))
+	+ SUM(IF(teams.team_name = results.away_team,results.away_score,0))
+        AS F,
+    SUM(IF(teams.team_name = results.home_team,results.away_score,0))
+	+ SUM(IF(teams.team_name = results.away_team,results.home_score,0))
+        AS A,
+	ROUND((SUM(IF(teams.team_name = results.home_team,results.home_score,0)) + SUM(IF(teams.team_name = results.away_team,results.away_score,0))) / (SUM(IF(teams.team_name = results.home_team,results.away_score,0)) + SUM(IF(teams.team_name = results.away_team,results.home_score,0))),3)
+		AS GA,
+    SUM(if(teams.team_name = results.away_team
+		AND results.away_score > results.home_score
+        OR teams.team_name = results.home_team
+        AND results.home_score > results.away_score,2,0))
+    + SUM(IF(results.away_score = results.home_score,1,0))
+		AS Pts
+FROM teams
+INNER JOIN results ON teams.team_name = results.home_team 
+    OR teams.team_name = results.away_team
+GROUP BY teams.team_name
+ORDER BY Pts DESC, GA DESC, Team ASC;
