@@ -63,7 +63,7 @@ class MySQLDatabase(object):
 
         return self.columns
 
-    def select(self, table, columns=None, named_tuples=False, **kwargs):
+    def select(self, table, league_table=False, columns=None, named_tuples=False, **kwargs):
         """
         We'll create our `select` method in order
         to make it simpler for extracting data from
@@ -80,6 +80,58 @@ class MySQLDatabase(object):
                 sql_str += "%s, " % column
 
             sql_str = sql_str[:-2]  # remove the last comma!
+
+        if league_table:
+            sql_str += " AS Team, "
+            sql_str += "SUM(if(teams.team_name = results.home_team " \
+                       "OR teams.team_name = results.away_team" \
+                       ",1,0))" \
+                       " AS P, "
+            sql_str += "SUM(if(teams.team_name = results.away_team " \
+                       "AND results.away_score > results.home_score " \
+                       "OR teams.team_name = results.home_team " \
+                       "AND results.home_score > results.away_score" \
+                       ",1,0))" \
+                       " AS W, "
+            sql_str += "SUM(IF(results.away_score = results.home_score" \
+                       ",1,0))" \
+                       " AS D, "
+            sql_str += "SUM(if(teams.team_name = results.away_team " \
+                       "AND results.away_score < results.home_score " \
+                       "OR teams.team_name = results.home_team " \
+                       "AND results.home_score < results.away_score" \
+                       ",1,0))" \
+                       " AS L, "
+            sql_str += "SUM(IF(teams.team_name = results.home_team," \
+                       "results.home_score,0)) " \
+                       "+ SUM(IF(teams.team_name = results.away_team," \
+                       "results.away_score,0))" \
+                       " AS F, "
+            sql_str += "SUM(IF(teams.team_name = results.home_team," \
+                       "results.away_score,0)) " \
+                       "+ SUM(IF(teams.team_name = results.away_team," \
+                       "results.home_score,0))" \
+                       " AS A, "
+            sql_str += "ROUND((" \
+                       "SUM(IF(teams.team_name = results.home_team," \
+                       "results.home_score,0)) " \
+                       "+ SUM(IF(teams.team_name = results.away_team," \
+                       "results.away_score,0))) " \
+                       "/ (" \
+                       "SUM(IF(teams.team_name = results.home_team," \
+                       "results.away_score,0)) " \
+                       "+ SUM(IF(teams.team_name = results.away_team," \
+                       "results.home_score,0)))" \
+                       ",3)" \
+                       " AS GA, "
+            sql_str += "SUM(if(teams.team_name = results.away_team " \
+                       "AND results.away_score > results.home_score " \
+                       "OR teams.team_name = results.home_team " \
+                       "AND results.home_score > results.away_score" \
+                       ",2,0)) " \
+                       "+ SUM(IF(results.away_score = results.home_score" \
+                       ",1,0))" \
+                       " AS Pts"
 
         # add the table to the SELECT query
         sql_str += " FROM `%s`.`%s`" % (self.database_name, table)

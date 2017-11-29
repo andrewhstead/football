@@ -153,7 +153,7 @@ SELECT
     + SUM(IF(results.away_score = results.home_score,1,0))
 		AS Pts
 FROM teams
-INNER JOIN results ON teams.team_name = results.home_team 
+JOIN results ON teams.team_name = results.home_team 
     OR teams.team_name = results.away_team
-GROUP BY teams.team_name
+GROUP BY team_name
 ORDER BY Pts DESC, GA DESC, Team ASC;
