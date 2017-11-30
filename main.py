@@ -11,7 +11,7 @@ db = MySQLDatabase(db_config.get('db_name'),
 def league_table(division, season, **kwargs):
     collect_data = db.league_table(division, season, **kwargs)
     output = PrettyTable(
-        field_names=['Pos', 'Team', 'P', 'W', 'D', 'L', 'F', 'A', 'GA', 'Pts']
+        field_names=['Pos', 'Team', 'P', 'W', 'D', 'L', 'F', 'A', 'GA', 'Pts', '+/-']
     )
     base_number = 0
     for entry in collect_data:
@@ -47,6 +47,4 @@ def head_to_head(team_one, team_two):
     print output
 
 
-league_table('FL', '1888-89', date='1889-01-01')
-team_results('Wolverhampton Wanderers', '1888-89')
-head_to_head('West Bromwich Albion', 'Wolverhampton Wanderers')
+league_table('FL', '1890-91')

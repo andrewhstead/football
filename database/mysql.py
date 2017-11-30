@@ -19,7 +19,7 @@ class MySQLDatabase(object):
 
     def league_table(self, division, season, **kwargs):
 
-        sql_str = "SELECT team_name AS Team, "
+        sql_str = "SELECT teams.team_name AS Team, "
 
         sql_str += "SUM(if(teams.team_name = results.home_team " \
                    "OR teams.team_name = results.away_team" \
@@ -75,8 +75,16 @@ class MySQLDatabase(object):
                    "AND results.home_score > results.away_score" \
                    ",2,0)) " \
                    "+ SUM(IF(results.away_score = results.home_score" \
-                   ",1,0))" \
-                   " AS Pts "
+                   ",1,0)) " \
+                   "+ " \
+                   "(IF(teams.team_name = adjustments.team_name, " \
+                   "adjustments.adjustment, 0)) " \
+                   "AS Pts, "
+
+        sql_str += "IF(adjustments.adjustment IS NULL, " \
+                   "'' , " \
+                   "adjustments.adjustment) " \
+                   "AS '+/-' "
 
         sql_str += "FROM teams "
 
@@ -85,12 +93,18 @@ class MySQLDatabase(object):
                    "OR " \
                    "teams.team_name = results.away_team "
 
-        sql_str += "WHERE division = '%s' AND season = '%s' " % (division, season)
+        sql_str += "LEFT JOIN adjustments " \
+                   "ON teams.team_name = adjustments.team_name " \
+                   "AND " \
+                   "results.season = adjustments.season "
+
+        sql_str += "WHERE results.division = '%s' " \
+                   "AND results.season = '%s' " % (division, season)
 
         if 'date' in kwargs:
             sql_str += " AND results.game_date <= '%s' " % kwargs.get('date')
 
-        sql_str += "GROUP BY team_name "
+        sql_str += "GROUP BY teams.team_name "
 
         sql_str += "ORDER BY Pts DESC, GA DESC, Team ASC"
 
