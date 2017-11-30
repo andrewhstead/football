@@ -35,6 +35,8 @@ CREATE TABLE teams (
     FOREIGN KEY (club_id) REFERENCES clubs(id)
 );
 
+CREATE INDEX team_index ON teams (team_name);
+
 INSERT INTO teams (
 	team_name,
     club_id
@@ -59,6 +61,8 @@ CREATE TABLE seasons (
     PRIMARY KEY (id)
 );
 
+CREATE INDEX season_index ON seasons (season);
+
 INSERT INTO seasons (
 	season
 ) VALUES
@@ -74,6 +78,8 @@ CREATE TABLE divisions (
     PRIMARY KEY (id)
 );
 
+CREATE INDEX division_index ON divisions (abbreviation);
+
 INSERT INTO divisions (
 	division,
     abbreviation,
@@ -81,10 +87,6 @@ INSERT INTO divisions (
 ) VALUES
 	('Football League', 'FL', 1)
 ;
-
-CREATE INDEX team_index ON teams (team_name);
-CREATE INDEX season_index ON seasons (season);
-CREATE INDEX division_index ON divisions (abbreviation);
 
 CREATE TABLE results (
     id INTEGER auto_increment,
@@ -101,6 +103,9 @@ CREATE TABLE results (
     FOREIGN KEY (season) REFERENCES seasons(season),
     FOREIGN KEY (division) REFERENCES divisions(abbreviation)
 );
+
+CREATE INDEX home_team_index ON results (home_team);
+CREATE INDEX away_team_index ON results (away_team);
 
 INSERT INTO results (
 	game_date,
