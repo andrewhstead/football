@@ -417,3 +417,26 @@ JOIN results ON teams.team_name = results.home_team
 WHERE season = '1888-89' and division = 'FL' 
 GROUP BY team_name
 ORDER BY Pts DESC, GA DESC, Team ASC;
+
+# To create a list of results for one team -
+SELECT
+	game_date AS 'Date',
+    IF(teams.team_name = results.home_team, results.away_team,results.home_team)
+    AS Opponent,
+    IF(teams.team_name = results.home_team, 'H', 'A') AS 'Ven.',
+    CASE
+		WHEN (teams.team_name = results.home_team AND results.home_score > results.away_score)
+			OR (teams.team_name = results.away_team AND results.away_score > results.home_score)
+				THEN 'W'
+		WHEN results.home_score = results.away_score THEN 'D' 
+		WHEN (teams.team_name = results.home_team AND results.home_score < results.away_score)
+			OR (teams.team_name = results.away_team AND results.away_score < results.home_score)
+				THEN 'L' 
+		END as 'Res.',
+    IF(teams.team_name = results.home_team, results.home_score, results.away_score) AS F,
+    IF(teams.team_name = results.home_team, results.away_score, results.home_score) AS A
+FROM results
+JOIN teams ON results.home_team = teams.team_name 
+    OR results.away_team = teams.team_name
+WHERE season = '1888-89' and teams.team_name = 'Wolverhampton Wanderers' 
+ORDER BY game_date ASC;

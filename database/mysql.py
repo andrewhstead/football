@@ -17,7 +17,7 @@ class MySQLDatabase(object):
             self.db.close()
             print "MySQL Connection Closed"
 
-    def create_table(self, season, division):
+    def table(self, season, division):
 
         sql_str = "SELECT team_name AS Team, "
 
@@ -76,20 +76,78 @@ class MySQLDatabase(object):
                    ",2,0)) " \
                    "+ SUM(IF(results.away_score = results.home_score" \
                    ",1,0))" \
-                   " AS Pts"
+                   " AS Pts "
 
-        sql_str += " FROM teams"
+        sql_str += "FROM teams "
 
-        sql_str += " JOIN results ON " \
+        sql_str += "JOIN results ON " \
                    "teams.team_name = results.home_team " \
                    "OR " \
-                   "teams.team_name = results.away_team"
+                   "teams.team_name = results.away_team "
 
-        sql_str += " WHERE season = '%s' and division = '%s'" % (season, division)
+        sql_str += "WHERE season = '%s' and division = '%s' " % (season, division)
 
-        sql_str += " GROUP BY team_name"
+        sql_str += "GROUP BY team_name "
 
-        sql_str += " ORDER BY Pts DESC, GA DESC, Team ASC"
+        sql_str += "ORDER BY Pts DESC, GA DESC, Team ASC"
+
+        sql_str += ";"
+
+        cursor = self.db.cursor()
+        cursor.execute(sql_str)
+        results = cursor.fetchall()
+        cursor.close()
+
+        return results
+
+    def team_season(self, team, season):
+
+        sql_str = "SELECT game_date AS 'Date', "
+
+        sql_str += "IF(teams.team_name = results.home_team, " \
+                   "results.away_team, results.home_team) " \
+                   "AS Opponent, "
+
+        sql_str += "IF(teams.team_name = results.home_team, " \
+                   "'H', 'A') " \
+                   "AS 'Ven.', "
+        
+        sql_str += "CASE " \
+                   "WHEN(teams.team_name = results.home_team " \
+                   "AND results.home_score > results.away_score) " \
+                   "OR(teams.team_name = results.away_team " \
+                   "AND results.away_score > results.home_score) " \
+                   "THEN 'W'"
+
+        sql_str += "WHEN results.home_score = results.away_score " \
+                   "THEN 'D'"
+
+        sql_str += "WHEN(teams.team_name = results.home_team " \
+                   "AND results.home_score < results.away_score) " \
+                   "OR(teams.team_name = results.away_team " \
+                   "AND results.away_score < results.home_score) " \
+                   "THEN 'L' "
+
+        sql_str += "END as 'Res.', "
+
+        sql_str += "IF(teams.team_name = results.home_team, " \
+                   "results.home_score, results.away_score) " \
+                   "AS F, "
+
+        sql_str += "IF(teams.team_name = results.home_team, " \
+                   "results.away_score, results.home_score) " \
+                   "AS A "
+
+        sql_str += "FROM results "
+
+        sql_str += "JOIN teams ON " \
+                   "results.home_team = teams.team_name " \
+                   "OR " \
+                   "results.away_team = teams.team_name "
+
+        sql_str += "WHERE teams.team_name = '%s' and season = '%s' " % (team, season)
+
+        sql_str += "ORDER BY game_date ASC"\
 
         sql_str += ";"
 

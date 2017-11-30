@@ -9,7 +9,7 @@ db = MySQLDatabase(db_config.get('db_name'),
 
 
 def league_table(season, division):
-    build_table = db.create_table(season, division)
+    build_table = db.table(season, division)
     draw_table = PrettyTable(
         field_names=['Pos', 'Team', 'P', 'W', 'D', 'L', 'F', 'A', 'GA', 'Pts']
     )
@@ -24,4 +24,21 @@ def league_table(season, division):
     print draw_table
 
 
+def team_results(team, season):
+    match_results = db.team_season(team, season)
+    results_list = PrettyTable(
+        field_names=['Game', 'Date', 'Opponent', 'Ven.', 'Res.', 'F', 'A']
+    )
+    match_number = 0
+
+    for result in match_results:
+        match_number += 1
+        match_details = list(result)
+        match_details.insert(0, match_number)
+        results_list.add_row(match_details)
+
+    print results_list
+
+
 league_table('1888-89', 'FL')
+team_results('Wolverhampton Wanderers', '1888-89')
