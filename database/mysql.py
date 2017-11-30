@@ -17,7 +17,7 @@ class MySQLDatabase(object):
             self.db.close()
             print "MySQL Connection Closed"
 
-    def table(self, season, division):
+    def league_table(self, division, season):
 
         sql_str = "SELECT team_name AS Team, "
 
@@ -85,7 +85,7 @@ class MySQLDatabase(object):
                    "OR " \
                    "teams.team_name = results.away_team "
 
-        sql_str += "WHERE season = '%s' and division = '%s' " % (season, division)
+        sql_str += "WHERE division = '%s' and season = '%s' " % (division, season)
 
         sql_str += "GROUP BY team_name "
 
@@ -100,7 +100,7 @@ class MySQLDatabase(object):
 
         return results
 
-    def team_season(self, team, season):
+    def team_results(self, team, season):
 
         sql_str = "SELECT game_date AS 'Date', "
 
@@ -149,6 +149,31 @@ class MySQLDatabase(object):
 
         sql_str += "ORDER BY game_date ASC"\
 
+        sql_str += ";"
+
+        cursor = self.db.cursor()
+        cursor.execute(sql_str)
+        results = cursor.fetchall()
+        cursor.close()
+
+        return results
+
+    def head_to_head(self, team_one, team_two):
+
+        sql_str = "SELECT game_date AS 'Date', "
+        sql_str += "division AS 'Div.', "
+        sql_str += "home_team AS 'Home Team', "
+        sql_str += "home_score AS 'HS', "
+        sql_str += "away_score AS 'AS', "
+        sql_str += "away_team AS 'Away Team' "
+
+        sql_str += "FROM results "
+        sql_str += "WHERE "
+        sql_str += "(home_team='%s' AND away_team = '%s') " % (team_one, team_two)
+        sql_str += "OR "
+        sql_str += "(home_team='%s' AND away_team = '%s') " % (team_two, team_one)
+
+        sql_str += "ORDER BY game_date ASC "
         sql_str += ";"
 
         cursor = self.db.cursor()

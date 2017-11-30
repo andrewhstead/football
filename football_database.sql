@@ -438,5 +438,5 @@ SELECT
 FROM results
 JOIN teams ON results.home_team = teams.team_name 
     OR results.away_team = teams.team_name
-WHERE season = '1888-89' and teams.team_name = 'Wolverhampton Wanderers' 
+WHERE teams.team_name = 'Wolverhampton Wanderers' and season = '1888-89'
 ORDER BY game_date ASC;

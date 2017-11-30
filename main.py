@@ -8,37 +8,45 @@ db = MySQLDatabase(db_config.get('db_name'),
                    db_config.get('host'))
 
 
-def league_table(season, division):
-    build_table = db.table(season, division)
-    draw_table = PrettyTable(
+def league_table(division, season):
+    collect_data = db.league_table(division, season)
+    output = PrettyTable(
         field_names=['Pos', 'Team', 'P', 'W', 'D', 'L', 'F', 'A', 'GA', 'Pts']
     )
-    position = 0
-
-    for team in build_table:
-        position += 1
-        team_record = list(team)
-        team_record.insert(0, position)
-        draw_table.add_row(team_record)
-
-    print draw_table
+    base_number = 0
+    for entry in collect_data:
+        base_number += 1
+        record = list(entry)
+        record.insert(0, base_number)
+        output.add_row(record)
+    print output
 
 
 def team_results(team, season):
-    match_results = db.team_season(team, season)
-    results_list = PrettyTable(
+    collect_data = db.team_results(team, season)
+    output = PrettyTable(
         field_names=['Game', 'Date', 'Opponent', 'Ven.', 'Res.', 'F', 'A']
     )
-    match_number = 0
-
-    for result in match_results:
-        match_number += 1
-        match_details = list(result)
-        match_details.insert(0, match_number)
-        results_list.add_row(match_details)
-
-    print results_list
+    base_number = 0
+    for entry in collect_data:
+        base_number += 1
+        record = list(entry)
+        record.insert(0, base_number)
+        output.add_row(record)
+    print output
 
 
-league_table('1888-89', 'FL')
+def head_to_head(team_one, team_two):
+    collect_data = db.head_to_head(team_one, team_two)
+    output = PrettyTable(
+        field_names=['Date', 'Div.', 'Home Team', 'HS', 'AS', 'Away Team']
+    )
+    for entry in collect_data:
+        record = list(entry)
+        output.add_row(record)
+    print output
+
+
+league_table('FL', '1888-89')
 team_results('Wolverhampton Wanderers', '1888-89')
+head_to_head('West Bromwich Albion', 'Wolverhampton Wanderers')
