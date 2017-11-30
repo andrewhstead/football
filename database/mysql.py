@@ -17,7 +17,7 @@ class MySQLDatabase(object):
             self.db.close()
             print "MySQL Connection Closed"
 
-    def league_table(self, division, season):
+    def league_table(self, division, season, **kwargs):
 
         sql_str = "SELECT team_name AS Team, "
 
@@ -85,7 +85,10 @@ class MySQLDatabase(object):
                    "OR " \
                    "teams.team_name = results.away_team "
 
-        sql_str += "WHERE division = '%s' and season = '%s' " % (division, season)
+        sql_str += "WHERE division = '%s' AND season = '%s' " % (division, season)
+
+        if 'date' in kwargs:
+            sql_str += " AND results.game_date <= '%s' " % kwargs.get('date')
 
         sql_str += "GROUP BY team_name "
 
@@ -145,7 +148,7 @@ class MySQLDatabase(object):
                    "OR " \
                    "results.away_team = teams.team_name "
 
-        sql_str += "WHERE teams.team_name = '%s' and season = '%s' " % (team, season)
+        sql_str += "WHERE teams.team_name = '%s' AND season = '%s' " % (team, season)
 
         sql_str += "ORDER BY game_date ASC"\
 
@@ -173,7 +176,7 @@ class MySQLDatabase(object):
         sql_str += "OR "
         sql_str += "(home_team='%s' AND away_team = '%s') " % (team_two, team_one)
 
-        sql_str += "ORDER BY game_date ASC "
+        sql_str += "ORDER BY game_date ASC"
         sql_str += ";"
 
         cursor = self.db.cursor()
