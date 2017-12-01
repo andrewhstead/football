@@ -798,6 +798,6 @@ SELECT
     away_score AS 'Sc.',
     away_team AS 'Away Team'
 FROM results
-WHERE (home_team = 'West Bromwich Albion' AND away_team = 'Wolverhampton Wanderers')
-	OR (home_team = 'Wolverhampton Wanderers' AND away_team = 'West Bromwich Albion')
+WHERE home_team = 'West Bromwich Albion' AND away_team = 'Wolverhampton Wanderers'
+	OR home_team = 'Wolverhampton Wanderers' AND away_team = 'West Bromwich Albion'
 ORDER BY game_date ASC;

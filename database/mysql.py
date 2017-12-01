@@ -188,10 +188,27 @@ class MySQLDatabase(object):
         sql_str += "away_team AS 'Away Team' "
 
         sql_str += "FROM results "
-        sql_str += "WHERE "
-        sql_str += "(home_team='%s' AND away_team = '%s') " % (team_one, team_two)
-        sql_str += "OR "
-        sql_str += "(home_team='%s' AND away_team = '%s') " % (team_two, team_one)
+
+        sql_str += "JOIN teams AS home_team " \
+                   "ON results.home_team = home_team.team_name " \
+                   "JOIN teams AS away_team " \
+                   "ON results.away_team = away_team.team_name " \
+                   "JOIN clubs AS home_club " \
+                   "ON home_team.club_id = home_club.id " \
+                   "JOIN clubs AS away_club " \
+                   "ON away_team.club_id = away_club.id "
+
+        sql_str += "WHERE(home_team.team_name = '%s' " \
+                   "AND away_team.team_name = '%s' " % (team_one, team_two)
+
+        sql_str += "OR home_team.team_name = '%s' " \
+                   "AND away_team.team_name = '%s') " % (team_two, team_one)
+
+        sql_str += "OR(home_club.club_name = '%s' " \
+                   "AND away_club.club_name = '%s' " % (team_one, team_two)
+
+        sql_str += "OR home_club.club_name = '%s' " \
+                   "AND away_club.club_name = '%s') " % (team_two, team_one)
 
         sql_str += "ORDER BY game_date ASC"
         sql_str += ";"
