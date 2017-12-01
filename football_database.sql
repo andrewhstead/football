@@ -784,7 +784,9 @@ SELECT
 FROM results
 JOIN teams ON results.home_team = teams.team_name 
     OR results.away_team = teams.team_name
-WHERE teams.team_name = 'Wolverhampton Wanderers' and season = '1888-89'
+JOIN clubs ON teams.club_id = clubs.id
+WHERE teams.team_name = 'Burnley' AND season = '1888-89' 
+	OR clubs.club_name = 'Burnley' AND season = '1888-89'
 ORDER BY game_date ASC;
 
 # To create a list of head-to-head results between two teams -

@@ -162,7 +162,10 @@ class MySQLDatabase(object):
                    "OR " \
                    "results.away_team = teams.team_name "
 
+        sql_str += "JOIN clubs ON teams.club_id = clubs.id "
+
         sql_str += "WHERE teams.team_name = '%s' AND season = '%s' " % (team, season)
+        sql_str += "OR clubs.club_name = '%s' AND season = '%s' " % (team, season)
 
         sql_str += "ORDER BY game_date ASC"\
 

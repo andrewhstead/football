@@ -47,4 +47,4 @@ def head_to_head(team_one, team_two):
     print output
 
 
-league_table('FL', '1890-91')
+team_results('Stoke City', '1891-92')
