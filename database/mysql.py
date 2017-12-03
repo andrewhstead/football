@@ -146,7 +146,7 @@ class MySQLDatabase(object):
 
     def team_results(self, team, season):
 
-        sql_str = "SELECT game_date AS 'Date', "
+        sql_str = "SELECT DATE_FORMAT(game_date, '%d/%m/%Y') AS 'Date', "
 
         sql_str += "IF(teams.team_name = results.home_team, " \
                    "results.away_team, results.home_team) " \
@@ -191,8 +191,7 @@ class MySQLDatabase(object):
 
         sql_str += "JOIN clubs ON teams.club_id = clubs.id "
 
-        sql_str += "WHERE teams.team_name = '%s' AND season = '%s' " % (team, season)
-        sql_str += "OR clubs.club_name = '%s' AND season = '%s' " % (team, season)
+        sql_str += "WHERE clubs.club_name = '%s' AND season = '%s' " % (team, season)
 
         sql_str += "ORDER BY game_date ASC"
 
@@ -207,7 +206,7 @@ class MySQLDatabase(object):
 
     def head_to_head(self, team_one, team_two):
 
-        sql_str = "SELECT game_date AS 'Date', "
+        sql_str = "SELECT DATE_FORMAT(game_date, '%d/%m/%Y') AS 'Date', "
         sql_str += "division AS 'Div.', "
         sql_str += "home_team AS 'Home Team', "
         sql_str += "home_score AS 'HS', "
