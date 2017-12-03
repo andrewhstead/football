@@ -51,4 +51,4 @@ def head_to_head(team_one, team_two):
     print output
 
 
-team_results('Accrington Stanley', '2016-17')
+head_to_head('Accrington Stanley (2)', 'Plymouth Argyle')
