@@ -56,25 +56,45 @@ class MySQLDatabase(object):
                    "results.home_score,0))" \
                    " AS A, "
 
-        sql_str += "ROUND((" \
-                   "SUM(IF(teams.team_name = results.home_team," \
-                   "results.home_score,0)) " \
-                   "+ SUM(IF(teams.team_name = results.away_team," \
-                   "results.away_score,0))) " \
-                   "/ (" \
-                   "SUM(IF(teams.team_name = results.home_team," \
-                   "results.away_score,0)) " \
-                   "+ SUM(IF(teams.team_name = results.away_team," \
-                   "results.home_score,0)))" \
-                   ",3)" \
-                   " AS GA, "
+        if season < '1976-77':
+            sql_str += "ROUND((" \
+                       "SUM(IF(teams.team_name = results.home_team," \
+                       "results.home_score,0)) " \
+                       "+ SUM(IF(teams.team_name = results.away_team," \
+                       "results.away_score,0))) " \
+                       "/ (" \
+                       "SUM(IF(teams.team_name = results.home_team," \
+                       "results.away_score,0)) " \
+                       "+ SUM(IF(teams.team_name = results.away_team," \
+                       "results.home_score,0)))" \
+                       ",3)" \
+                       " AS GA, "
 
-        sql_str += "SUM(if(teams.team_name = results.away_team " \
-                   "AND results.away_score > results.home_score " \
-                   "OR teams.team_name = results.home_team " \
-                   "AND results.home_score > results.away_score" \
-                   ",2,0)) " \
-                   "+ SUM(IF(results.away_score = results.home_score" \
+        else:
+            sql_str += "(SUM(IF(teams.team_name = results.home_team, " \
+                       "results.home_score, 0)) " \
+                       "+ SUM(IF(teams.team_name = results.away_team, " \
+                       "results.away_score, 0))" \
+                       ") - (SUM(IF(teams.team_name = results.home_team, " \
+                       "results.away_score, 0)) " \
+                       "+ SUM(IF(teams.team_name = results.away_team, " \
+                       "results.home_score, 0))" \
+                       ") AS GD,"
+
+        if season < '1981-82':
+            sql_str += "SUM(if(teams.team_name = results.away_team " \
+                       "AND results.away_score > results.home_score " \
+                       "OR teams.team_name = results.home_team " \
+                       "AND results.home_score > results.away_score" \
+                       ",2,0)) "
+        else:
+            sql_str += "SUM(if(teams.team_name = results.away_team " \
+                       "AND results.away_score > results.home_score " \
+                       "OR teams.team_name = results.home_team " \
+                       "AND results.home_score > results.away_score" \
+                       ",3,0)) "
+
+        sql_str += "+ SUM(IF(results.away_score = results.home_score" \
                    ",1,0)) " \
                    "+ " \
                    "(IF(teams.team_name = adjustments.team_name, " \
@@ -106,7 +126,12 @@ class MySQLDatabase(object):
 
         sql_str += "GROUP BY teams.team_name "
 
-        sql_str += "ORDER BY Pts DESC, GA DESC, Team ASC"
+        if season < '1981-82':
+            sql_str += "ORDER BY Pts DESC, GA DESC, Team ASC"
+        elif division != 'PL' and '1991-92' < season < '1999-00':
+            sql_str += "ORDER BY Pts DESC, GA DESC, Team ASC"
+        else:
+            sql_str += "ORDER BY Pts DESC, GD DESC, F DESC, Team ASC"
 
         sql_str += ";"
 
@@ -128,7 +153,7 @@ class MySQLDatabase(object):
         sql_str += "IF(teams.team_name = results.home_team, " \
                    "'H', 'A') " \
                    "AS 'Ven.', "
-        
+
         sql_str += "CASE " \
                    "WHEN(teams.team_name = results.home_team " \
                    "AND results.home_score > results.away_score) " \

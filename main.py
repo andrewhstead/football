@@ -10,8 +10,12 @@ db = MySQLDatabase(db_config.get('db_name'),
 
 def league_table(division, season, **kwargs):
     collect_data = db.league_table(division, season, **kwargs)
+    if season < '1976-77':
+        tie_breaker = 'GA'
+    else:
+        tie_breaker = 'GD'
     output = PrettyTable(
-        field_names=['Pos', 'Team', 'P', 'W', 'D', 'L', 'F', 'A', 'GA', 'Pts', '+/-']
+        field_names=['Pos', 'Team', 'P', 'W', 'D', 'L', 'F', 'A', tie_breaker, 'Pts', '+/-']
     )
     base_number = 0
     for entry in collect_data:
@@ -47,4 +51,4 @@ def head_to_head(team_one, team_two):
     print output
 
 
-head_to_head('Stoke City', 'Everton')
+team_results('Accrington Stanley', '2016-17')
